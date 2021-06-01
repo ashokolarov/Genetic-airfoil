@@ -1,13 +1,9 @@
 import numpy as np
 import subprocess as sp
-import os
 import matplotlib.pyplot as plt
 
-plt.style.use('classic')
-plt.rcParams.update({'font.size' : 20})
 
-
-class Xfoil():
+class Xfoil:
 
     def __init__(self, xfoil_location, N_iter, Re, M, alfas):
         self.xfoil_dir = xfoil_location
@@ -30,10 +26,10 @@ class Xfoil():
         :param airfoil_dat: .dat file containing airfoil coordinates
         :param polar_txt: name of .txt file to store xfoil output
         """
-        ps = sp.Popen([self.xfoil_dir], stdin=sp.PIPE, stderr=None, stdout=None)
+        ps = sp.Popen([self.xfoil_dir], stdin=sp.PIPE, stderr=sp.PIPE, stdout=sp.PIPE)
 
-        if os.path.exists(polar_txt):
-            os.remove(polar_txt)
+        # if os.path.exists(polar_txt):
+        #     os.remove(polar_txt)
 
         self.issueCmd(ps, 'load ' + airfoil_dat)
         self.issueCmd(ps, 'oper')
@@ -48,16 +44,25 @@ class Xfoil():
 
         ps.communicate('quit'.encode('utf-8'))
 
-    def get_CL3CD2(self, polar_txt):
+    def get_opt_params(self, polar_txt):
         """
         :param polar_txt: file containing the output of xfoil polar analysis.
         :return: maximum CL3 / CD2 ratio for the set of angles of attack.
         """
         with open(polar_txt) as file:
-            data = np.array([np.array([float(x) for x in line.split()]) for line in file.readlines()[12:]])
-            CL3CD2 = data[:,1] **3 / data[:,2] **2
-            CL3CD2 = np.max(data[:,1]**3 / data[:,2]**2)
-        return CL3CD2
+            polar_data = np.array([np.array([float(x) for x in line.split()]) for line in file.readlines()[12:]])
+            alfa = polar_data[:,0]
+            Cl = polar_data[:,1]
+            Cd = polar_data[:,2]
+
+            idx = np.argmax(Cl*Cl*Cl / Cd / Cd)
+            ClCd = Cl[idx] / Cd[idx]
+            Cl3Cd2 = (Cl[idx])**3 / (Cd[idx])**2
+
+            stall_idx = np.argmax(Cl)
+            alfa_range = alfa[stall_idx] - alfa[idx]
+
+        return ClCd, Cl3Cd2, alfa_range
 
     def plot_polar(self, polar_txt):
         """
@@ -69,7 +74,7 @@ class Xfoil():
             alfa = data[:,0]
             Cl = data[:,1]
             Cd = data[:,2]
-            Cl3Cd2 = Cl**3 / Cl**2
+            Cl3Cd2 = Cl**3 / Cd**2
 
         fig, axs = plt.subplots(2,2)
 
@@ -89,15 +94,20 @@ class Xfoil():
 
 
 if __name__ == "__main__":
-    airfoil_file = 'airfoils/optimized.dat'
+    plt.style.use('classic')
+    plt.rcParams.update({'font.size': 20})
+
+    airfoil_file = 'airfoils/nlf1015.dat'
     polar_file = 'airfoils/polar.dat'
     xfoil_dir = '/bin/xfoil'
 
-    Re = 4.2e6
+    Re = 8.0955e5
     M = 0.5
     N = 400
-    alfas = [0, 15, 0.5]
+    alfas = [0, 13, 0.5]
 
     xfoil = Xfoil(xfoil_dir, N, Re, M, alfas)
     xfoil.get_polar(airfoil_file, polar_file)
-    cl3cd2 = xfoil.get_CL3CD2(polar_file)
+    xfoil.plot_polar(polar_file)
+    #params = xfoil.get_opt_params(polar_file)
+

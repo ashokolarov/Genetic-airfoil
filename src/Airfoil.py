@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 
 
-class Airfoil():
+class Airfoil:
 
     def __init__(self, parsec_params, zup, zlo):
         """
@@ -23,23 +23,21 @@ class Airfoil():
     def from_parsec(cls, *args):
         """
         Create a class instance from number of nodes and PARSEC elements.
-
-        :param N: number of nodes for upper and lower surfaces.
         :param args: array holding parsec parameters
         """
         Aup, Alo = Airfoil._get_poly_coeff(*args)
 
         def zup(x):
-            zup = 0
+            _zup = 0
             for i in range(6):
-                zup += Aup[i] * x **(i+0.5)
-            return zup
+                _zup += Aup[i] * x **(i+0.5)
+            return _zup
 
         def zlo(x):
-            zlo = 0
+            _zlo = 0
             for i in range(6):
-                zlo += Alo[i] * x **(i+0.5)
-            return zlo
+                _zlo += Alo[i] * x **(i+0.5)
+            return _zlo
 
         return Airfoil(*args, zup, zlo)
 
@@ -187,7 +185,7 @@ class Airfoil():
         xi = np.cos( np.pi/(2*(n+1)) * (2*np.linspace(1, n+1, n+1) - 1) )
         return ((-xi + 1)/2) * (b-a) + a
 
-    def save_as_dat(self, name, N):
+    def save_as_dat(self, name, N, plot=False):
         """
         Save generated airfoil coordinates to a .dat file using chebychev nodes.
         :param name: name of file to save to
@@ -196,6 +194,12 @@ class Airfoil():
         x = self.grid_chebychev(N)
         zup = [self.zup(i) for i in x]
         zlo = [self.zlo(i) for i in x]
+
+        if plot:
+            plt.plot(x, zup, marker='x')
+            plt.plot(x, zlo, marker='x')
+            plt.show()
+
         data = np.array(list(zip(x, zup)))
         data = np.flip(data,0)
 
@@ -232,8 +236,9 @@ class Airfoil():
         
 
 if __name__ == "__main__":
-    dat_file = "airfoils/nlf1015.dat"
-    foil = Airfoil.from_dat(dat_file, True)
+    dat_file = "nlf1015.dat"
+    foil = Airfoil.from_dat(dat_file)
+    foil.save_as_dat('original.dat', 150, True)
     
     #save_as = 'bla.dat'
     #N = 150
