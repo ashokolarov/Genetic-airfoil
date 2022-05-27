@@ -10,8 +10,7 @@ Optimization of airfoil geometry for a high-altitude, long endurance (HALE) UAV.
 ![plot](figs/image.png)
 * Optimization of airfoil geometry according to cost function f = 0.5*Cl3/Cd2 + 0.3*Cl/Cd + 0.2*alfa_range, where alfa_range is the range between the cruise angle of attack and the stall angle of attack. Done through a genetic algorithm formulation.
 
-#### Cost progressions versus iteration number
-![plot](figs/cost_progression.png)
+
 #### Comparison between initial parameters and optimized parameters
 ![plot](figs/final_params.png)
 #### Original vs optimized airfoil geometry
